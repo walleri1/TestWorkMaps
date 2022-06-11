@@ -1,113 +1,114 @@
 import QtQuick 2.15
+import QtQuick.Controls 2.1
 import QtQuick.Window 2.15
 import QtPositioning 5.15
 import QtLocation 5.15
 
-Window {
-    width: 640
-    height: 480
+ApplicationWindow {
+    id: root
     visible: true
+    width: 1000
+    height: width
     title: qsTr("Редактор полигонов. Тестовое задание")
 
-    property double old : 19
-    property double now
+    Rectangle {
+        id: container
+        anchors.fill: parent
 
-    Rectangle
+        Plugin
         {
-            anchors.fill: parent
-            color: "#eee"
-
-            Component.onCompleted:
-            {
-                circle.center = src.position.coordinate
-                circle1.center = src.position.coordinate
-                circle2.center = src.position.coordinate
-                maps.center = src.position.coordinate
-            }
-
-            PositionSource
-            {
-                id: src
-                active: true
-                updateInterval: 1000
-                onPositionChanged:
-                {
-                    circle.center = position.coordinate
-                    circle1.center = position.coordinate
-                    circle2.center = position.coordinate
-                }
-            }
-
-            Plugin
-            {
-                id: plugin
-                name: "osm"
-                PluginParameter { name: "osm.useragent"; value: "My great Qt OSM application" }
-                PluginParameter { name: "osm.mapping.host"; value: "http://osm.tile.server.address/" }
-                PluginParameter { name: "osm.mapping.copyright"; value: "All mine" }
-                PluginParameter { name: "osm.routing.host"; value: "http://osrm.server.address/viaroute" }
-                PluginParameter { name: "osm.geocoding.host"; value: "http://geocoding.server.address" }
+            id: plugin
+            name: "osm"
+            parameters: [
+                PluginParameter { name: "osm.useragent"; value: "My great Qt OSM application" },
+                PluginParameter { name: "osm.mapping.host"; value: "http://osm.tile.server.address/" },
+                PluginParameter { name: "osm.mapping.copyright"; value: "All mine" },
+                PluginParameter { name: "osm.routing.host"; value: "http://osrm.server.address/viaroute" },
+                PluginParameter { name: "osm.geocoding.host"; value: "http://geocoding.server.address" },
                 PluginParameter { name: "osm.places.host"; value: "http://geocoding.server.address" }
+            ]
+        }
+
+        Map {
+            id: maps
+            anchors.fill: parent
+            plugin: plugin
+            gesture.enabled: true
+            gesture.acceptedGestures: MapGestureArea.PinchGesture | MapGestureArea.PanGesture | MapGestureArea.FlickGesture
+            gesture.flickDeceleration: 3000
+            zoomLevel: 11
+            minimumZoomLevel: 1
+            center: QtPositioning.coordinate(59.95, 30.30)
+
+            MapPolygon {
+                id: mapPolygon
+                autoFadeIn: true
             }
 
-            Map
-            {
-                id: maps
+            MouseArea {
+                id: mouseArea
                 anchors.fill: parent
-                plugin: plugin
-                gesture.enabled: true
-                gesture.acceptedGestures: MapGestureArea.PinchGesture | MapGestureArea.PanGesture | MapGestureArea.FlickGesture
-                gesture.flickDeceleration: 3000
-                zoomLevel: 19
+                acceptedButtons: Qt.AllButtons
+                hoverEnabled: true
 
-                onZoomLevelChanged:
-                {
+                onClicked: {
+                    if (mouse.button === Qt.LeftButton) {
+                        const newCircleItem = Qt.createComponent("Point.qml").createObject(maps)
+                        const currentCoordinate = maps.toCoordinate(Qt.point(mouse.x, mouse.y))
+                        newCircleItem.center = currentCoordinate
+                        newCircleItem.radius = 200.0
+                        newCircleItem.color = 'green'
+                        newCircleItem.border.width = 3
 
-                }
+                        let distance = []
+                        mapPolygon.path.forEach((item, index) => {
+                                                    distance.push(currentCoordinate.distanceTo(item))
+                                                })
+                        distance.sort()
+                        mapPolygon.path.forEach((item, index) => {
+                                                    if (currentCoordinate.distanceTo(item) === distance[0]) {
+//                                                            mapPolygon.path
+                                                    }
+                                                })
 
-                minimumZoomLevel: 1
-
-                focus: true
-
-                MapCircle {
-                    id: circle
-                    z: 2
-                    color: "#fff"
-                    radius: 8
-                    border.color: "#fff"
-                    center
-                    {
-                        latitude: src.position.coordinate.latitude
-                        longitude: src.position.coordinate.longitude
+                        mapPolygon.addCoordinate(newCircleItem.center)
+                        maps.addMapItem(newCircleItem)
+                    } else if (mouse.button === Qt.RightButton) {
+                        const currentCoordinate = maps.toCoordinate(Qt.point(mouse.x, mouse.y))
+                        maps.mapItems.forEach(item => {
+                                                if (currentCoordinate.distanceTo(item.center) <= item.radius) {
+                                                      maps.removeMapItem(item)
+                                                      mapPolygon.removeCoordinate(item.center)
+                                                  }
+                                              })
                     }
                 }
 
-                MapCircle {
-                    id: circle2
-                    z: 3
-                    color: "#0084ff"
-                    radius: 4
-                    border.color: "#0084ff"
-                    center
-                    {
-                        latitude: src.position.coordinate.latitude
-                        longitude: src.position.coordinate.longitude
+                onPressAndHold: {
+                    if (mouse.button === Qt.LeftButton) {
+                        const currentCoordinate = maps.toCoordinate(Qt.point(mouse.x, mouse.y))
+                        maps.mapItems.forEach(item => {
+                                                  if (currentCoordinate.distanceTo(item.center) <= item.radius) {
+                                                      maps.removeMapItem(item)
+                                                      mapPolygon.removeCoordinate(item.center)
+                                                  }
+                                             })
                     }
                 }
 
-                MapCircle {
-                    id: circle1
-                    z: 1
-                    color: "#0084ff"
-                    border.color: "#0084ff"
-                    opacity: 0.25
-                    radius: 19
-                    center
-                    {
-                        latitude: src.position.coordinate.latitude
-                        longitude: src.position.coordinate.longitude
-                    }
+                onReleased: {
+                    const newCircleItem = Qt.createComponent("Point.qml").createObject(maps)
+                    const currentCoordinate = maps.toCoordinate(Qt.point(mouse.x, mouse.y))
+                    newCircleItem.center = currentCoordinate
+                    newCircleItem.radius = 200.0
+                    newCircleItem.color = 'green'
+                    newCircleItem.border.width = 3
+
+                    mapPolygon.addCoordinate(newCircleItem.center)
+                    maps.addMapItem(newCircleItem)
                 }
             }
         }
+
+    }
 }
