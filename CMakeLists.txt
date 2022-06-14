@@ -15,13 +15,13 @@ if(APPLE)
     set (CMAKE_PREFIX_PATH "~/Qt/5.15.2/clang_64/")
 endif()
 
-find_package(QT NAMES Qt5 REQUIRED COMPONENTS Core Quick)
-find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core Quick)
+find_package(QT NAMES Qt5 REQUIRED COMPONENTS Core Quick Positioning)
+find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core Quick Positioning)
 
 set(PROJECT_SOURCES
         main.cpp
         qml.qrc
-)
+        PolygoneCore.cpp PolygoneCore.h)
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
     qt_add_executable(TestWorkMaps
@@ -49,10 +49,10 @@ endif()
 target_compile_definitions(TestWorkMaps
   PRIVATE $<$<OR:$<CONFIG:Debug>,$<CONFIG:RelWithDebInfo>>:QT_QML_DEBUG>)
 target_link_libraries(TestWorkMaps
-  PRIVATE Qt${QT_VERSION_MAJOR}::Core Qt${QT_VERSION_MAJOR}::Quick)
+  PRIVATE Qt${QT_VERSION_MAJOR}::Core Qt${QT_VERSION_MAJOR}::Quick Qt${QT_VERSION_MAJOR}::Positioning)
 
 set_target_properties(TestWorkMaps PROPERTIES
-    MACOSX_BUNDLE_GUI_IDENTIFIER my.example.com
+    MACOSX_BUNDLE_GUI_IDENTIFIER ru.radio.mms.test.work
     MACOSX_BUNDLE_BUNDLE_VERSION ${PROJECT_VERSION}
     MACOSX_BUNDLE_SHORT_VERSION_STRING ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
     MACOSX_BUNDLE TRUE

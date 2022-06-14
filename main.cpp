@@ -1,5 +1,6 @@
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
+#include "PolygoneCore.h"
 
 
 int main(int argc, char *argv[])
@@ -8,6 +9,8 @@ int main(int argc, char *argv[])
     QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
 #endif
     QGuiApplication app(argc, argv);
+
+    qmlRegisterType<PolygoneCore>("ru.radio.mmc.test.work", 1,0, "PolygoneCore");
 
     QQmlApplicationEngine engine;
     const QUrl url(QStringLiteral("qrc:/main.qml"));
