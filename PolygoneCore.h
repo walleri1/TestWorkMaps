@@ -13,9 +13,11 @@ public:
 signals:
     void newPoint(const QGeoCoordinate& coordinate);
     void changeCoordinatePolygon(const QList<QGeoCoordinate> coordinatePolygon);
+    void delPoint(const QGeoCoordinate& coordinate);
 
-public slots:
+private slots:
     void addPoint(const QGeoCoordinate& coordinate);
+    void removePoint(const QGeoCoordinate& coordinate);
 
 private:
     std::vector<QGeoCoordinate> coordinatePolygon;

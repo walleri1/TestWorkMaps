@@ -13,12 +13,29 @@ ApplicationWindow {
     height: width
     title: qsTr("Редактор полигонов. Тестовое задание")
 
+    function appendPoint(currentCoordinate) {
+        const newCircleItem = Qt.createComponent("Point.qml").createObject(maps)
+        newCircleItem.center = currentCoordinate
+        newCircleItem.radius = 500.0
+        newCircleItem.color = 'green'
+        newCircleItem.border.width = 3
+        maps.addMapItem(newCircleItem)
+        mapPolygon.addCoordinate(currentCoordinate)
+    }
+
     PolygoneCore {
         id: polygoneCore
 
         onChangeCoordinatePolygon: {
-            mapPolygon.path.forEach(item => {mapPolygon.removeCoordinate(item)})
-            coordinatePolygon.forEach(item => {mapPolygon.addCoordinate(item)})
+            maps.clearMapItems()
+            mapPolygon.path.forEach(item => {
+                mapPolygon.removeCoordinate(item)
+            })
+
+            if (!coordinatePolygon.isEmpty)
+                coordinatePolygon.forEach(item => {
+                    appendPoint(item)
+                })
         }
     }
 
@@ -64,24 +81,15 @@ ApplicationWindow {
 
                 onClicked: {
                     if (mouse.button === Qt.LeftButton) {
-                        const newCircleItem = Qt.createComponent("Point.qml").createObject(maps)
                         const currentCoordinate = maps.toCoordinate(Qt.point(mouse.x, mouse.y))
-                        newCircleItem.center = currentCoordinate
-                        newCircleItem.radius = 500.0
-                        newCircleItem.color = 'green'
-                        newCircleItem.border.width = 3
-
-//                        mapPolygon.addCoordinate(newCircleItem.center)
-                        maps.addMapItem(newCircleItem)
                         polygoneCore.newPoint(currentCoordinate)
                     } else if (mouse.button === Qt.RightButton) {
                         const currentCoordinate = maps.toCoordinate(Qt.point(mouse.x, mouse.y))
                         maps.mapItems.forEach(item => {
-                                                if (currentCoordinate.distanceTo(item.center) <= item.radius) {
-                                                      maps.removeMapItem(item)
-                                                      mapPolygon.removeCoordinate(item.center)
-                                                  }
-                                              })
+                            if (currentCoordinate.distanceTo(item.center) <= item.radius) {
+                                  polygoneCore.delPoint(item.center)
+                            }
+                        })
                     }
                 }
             }

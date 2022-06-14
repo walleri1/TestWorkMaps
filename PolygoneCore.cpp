@@ -5,6 +5,7 @@ PolygoneCore::PolygoneCore(QObject *parent) : QObject(parent) {
     coordinatePolygon.clear();
 
     connect(this, &PolygoneCore::newPoint, &PolygoneCore::addPoint);
+    connect(this, &PolygoneCore::delPoint, &PolygoneCore::removePoint);
 }
 
 void PolygoneCore::addPoint(const QGeoCoordinate& coordinate) {
@@ -40,4 +41,10 @@ std::vector<std::pair<QGeoCoordinate, double>> PolygoneCore::getVectorPairCoordi
     }
 
     return distanceCoordinate;
+}
+
+void PolygoneCore::removePoint(const QGeoCoordinate& coordinate) {
+    coordinatePolygon.erase(std::remove(coordinatePolygon.begin(), coordinatePolygon.end(), coordinate));
+
+    emit changeCoordinatePolygon(QList<QGeoCoordinate>::fromVector(QVector<QGeoCoordinate>::fromStdVector(coordinatePolygon)));
 }
