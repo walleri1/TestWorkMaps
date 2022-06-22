@@ -13,14 +13,17 @@ ApplicationWindow {
     height: width
     title: qsTr("Редактор полигонов. Тестовое задание")
 
-    function appendPoint(currentCoordinate) {
-        const newCircleItem = Qt.createComponent("Point.qml").createObject(maps)
-        newCircleItem.center = currentCoordinate
-        newCircleItem.radius = 500.0
-        newCircleItem.color = 'green'
-        newCircleItem.border.width = 3
+    function appendPoint(currentCoordinate, index) {
+        let newCircleItem = Qt.createComponent("Point.qml")
+        if (newCircleItem.status === Component.Ready) {
+            newCircleItem = newCircleItem.createObject(maps, {coordinate: currentCoordinate, index: index})
+        }
         maps.addMapItem(newCircleItem)
         mapPolygon.addCoordinate(currentCoordinate)
+    }
+
+    function translateMouseCoordinateToMapCoordinate(mouse) {
+        return maps.toCoordinate(Qt.point(mouse.x, mouse.y))
     }
 
     PolygoneCore {
@@ -29,12 +32,13 @@ ApplicationWindow {
         onChangeCoordinatePolygon: {
             maps.clearMapItems()
             mapPolygon.path.forEach(item => {
+                console.log(item)
                 mapPolygon.removeCoordinate(item)
             })
 
             if (!coordinatePolygon.isEmpty)
-                coordinatePolygon.forEach(item => {
-                    appendPoint(item)
+                coordinatePolygon.forEach((item, index) => {
+                    appendPoint(item, index)
                 })
         }
     }
@@ -71,6 +75,7 @@ ApplicationWindow {
             MapPolygon {
                 id: mapPolygon
                 autoFadeIn: true
+                color: 'red'
             }
 
             MouseArea {
@@ -81,16 +86,22 @@ ApplicationWindow {
 
                 onClicked: {
                     if (mouse.button === Qt.LeftButton) {
-                        const currentCoordinate = maps.toCoordinate(Qt.point(mouse.x, mouse.y))
+                        const currentCoordinate = translateMouseCoordinateToMapCoordinate(mouse)
                         polygoneCore.newPoint(currentCoordinate)
                     } else if (mouse.button === Qt.RightButton) {
-                        const currentCoordinate = maps.toCoordinate(Qt.point(mouse.x, mouse.y))
+                        const currentCoordinate = translateMouseCoordinateToMapCoordinate(mouse)
                         maps.mapItems.forEach(item => {
-                            if (currentCoordinate.distanceTo(item.center) <= item.radius) {
+                            if (currentCoordinate.distanceTo(item.coordinate) <= 100) {
                                   polygoneCore.delPoint(item.center)
                             }
                         })
                     }
+                }
+
+                onPositionChanged: {
+                    const currentCoordinate = translateMouseCoordinateToMapCoordinate(mouse)
+                    const button = (mouse.button === Qt.LeftButton) ? "left" : ((mouse.button === Qt.RightButton) ? "right" : "none");
+                    polygoneCore.mouseEvent(currentCoordinate, button)
                 }
             }
         }

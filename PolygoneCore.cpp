@@ -6,6 +6,7 @@ PolygoneCore::PolygoneCore(QObject *parent) : QObject(parent) {
 
     connect(this, &PolygoneCore::newPoint, &PolygoneCore::addPoint);
     connect(this, &PolygoneCore::delPoint, &PolygoneCore::removePoint);
+    connect(this, &PolygoneCore::mouseEvent, &PolygoneCore::mousePressEvent);
 }
 
 void PolygoneCore::addPoint(const QGeoCoordinate& coordinate) {
@@ -47,4 +48,12 @@ void PolygoneCore::removePoint(const QGeoCoordinate& coordinate) {
     coordinatePolygon.erase(std::remove(coordinatePolygon.begin(), coordinatePolygon.end(), coordinate));
 
     emit changeCoordinatePolygon(QList<QGeoCoordinate>::fromVector(QVector<QGeoCoordinate>::fromStdVector(coordinatePolygon)));
+}
+
+int PolygoneCore::getCount() {
+    return coordinatePolygon.size();
+}
+
+void PolygoneCore::mousePressEvent(const QGeoCoordinate& coordinate) {
+    qDebug() << "mousePressEvent: " << coordinate.toString();
 }
